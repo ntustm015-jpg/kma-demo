@@ -1,0 +1,385 @@
+<index. html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KMA 後設認知知識監控評量體驗活動</title>
+
+<style>
+body{
+    font-family:"Microsoft JhengHei",sans-serif;
+    background:#f5f7fb;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 0 20px rgba(0,0,0,.1);
+}
+
+h1{
+    text-align:center;
+    color:#2c3e50;
+}
+
+h2{
+    color:#34495e;
+}
+
+.question{
+    background:#fafafa;
+    padding:15px;
+    margin:15px 0;
+    border-radius:10px;
+    border-left:5px solid #4a90e2;
+}
+
+button{
+    background:#4a90e2;
+    color:white;
+    border:none;
+    padding:12px 25px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+button:hover{
+    background:#357abd;
+}
+
+.hidden{
+    display:none;
+}
+
+.result-card{
+    background:#f0f9ff;
+    padding:15px;
+    margin:10px 0;
+    border-radius:10px;
+}
+
+.good{
+    color:green;
+    font-weight:bold;
+}
+
+.bad{
+    color:red;
+    font-weight:bold;
+}
+
+.warn{
+    color:#ff9800;
+    font-weight:bold;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
+    text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- Step1 -->
+<div id="step1">
+
+<h1>KMA 後設認知知識監控評量體驗活動</h1>
+
+<p>
+請先不要作答題目，
+先判斷自己是否會答對。
+</p>
+
+<div id="predictArea"></div>
+
+<br>
+
+<button onclick="goToQuiz()">
+開始作答
+</button>
+
+</div>
+
+<!-- Step2 -->
+<div id="step2" class="hidden">
+
+<h1>正式測驗</h1>
+
+<div id="quizArea"></div>
+
+<br>
+
+<button onclick="calculateResult()">
+提交答案
+</button>
+
+</div>
+
+<!-- Step3 -->
+<div id="step3" class="hidden">
+
+<h1>結果分析</h1>
+
+<div id="summary"></div>
+
+<div id="detail"></div>
+
+</div>
+
+</div>
+
+<script>
+
+const questions = [
+
+{
+q:"何者最符合『後設認知』的概念？",
+options:[
+"背誦課本內容",
+"記錄老師講義",
+"監控與評估自己的學習狀況",
+"完成作業"
+],
+answer:2
+},
+
+{
+q:"如果學生知道自己哪裡會、哪裡不會，代表其具有較高的：",
+options:[
+"記憶能力",
+"後設認知能力",
+"智商",
+"注意力"
+],
+answer:1
+},
+
+{
+q:"哪一項屬於 Monitoring（監控）？",
+options:[
+"抄筆記",
+"背定義",
+"確認自己是否真正理解內容",
+"瀏覽投影片"
+],
+answer:2
+},
+
+{
+q:"為何網路學習特別需要後設認知？",
+options:[
+"教材比較簡單",
+"老師會隨時提醒",
+"學生需自行規劃與調整學習",
+"考試比較少"
+],
+answer:2
+},
+
+{
+q:"高後設認知學習者最可能：",
+options:[
+"重複閱讀已經熟悉的內容",
+"只關心成績",
+"能區分已知與未知內容",
+"完全依賴教師"
+],
+answer:2
+}
+
+];
+
+const predictArea=document.getElementById("predictArea");
+const quizArea=document.getElementById("quizArea");
+
+questions.forEach((item,index)=>{
+
+predictArea.innerHTML += `
+<div class="question">
+<b>Q${index+1}</b>：你覺得自己會答對嗎？
+<br><br>
+
+<label>
+<input type="radio" 
+name="predict${index}" 
+value="yes">
+我會
+</label>
+
+&nbsp;&nbsp;
+
+<label>
+<input type="radio" 
+name="predict${index}" 
+value="no">
+我不會
+</label>
+
+</div>
+`;
+
+quizArea.innerHTML += `
+<div class="question">
+<b>Q${index+1}</b>：
+${item.q}
+
+<br><br>
+
+${item.options.map((op,i)=>`
+<label>
+<input type="radio"
+name="answer${index}"
+value="${i}">
+${op}
+</label><br>
+`).join("")}
+
+</div>
+`;
+
+});
+
+function goToQuiz(){
+
+document.getElementById("step1").classList.add("hidden");
+document.getElementById("step2").classList.remove("hidden");
+
+}
+
+function calculateResult(){
+
+let correct=0;
+let estimatedCorrect=0;
+
+let overestimate=[];
+let underestimate=[];
+
+let detailHTML="";
+
+questions.forEach((q,index)=>{
+
+let prediction=document.querySelector(`input[name="predict${index}"]:checked`);
+let answer=document.querySelector(`input[name="answer${index}"]:checked`);
+
+let predicted=prediction ? prediction.value : "no";
+let actual=answer && Number(answer.value)===q.answer;
+
+if(actual) correct++;
+
+if(predicted==="yes") estimatedCorrect++;
+
+if(predicted==="yes" && !actual){
+
+overestimate.push(index+1);
+
+}
+
+if(predicted==="no" && actual){
+
+underestimate.push(index+1);
+
+}
+
+detailHTML += `
+<tr>
+<td>Q${index+1}</td>
+<td>${predicted==="yes"?"我會":"我不會"}</td>
+<td>${actual?"✅答對":"❌答錯"}</td>
+</tr>
+`;
+
+});
+
+document.getElementById("step2").classList.add("hidden");
+document.getElementById("step3").classList.remove("hidden");
+
+let type="";
+
+if(overestimate.length===0 && underestimate.length===0){
+
+type="🎯 精準監控型";
+
+}else if(overestimate.length>underestimate.length){
+
+type="⚠️ 高估型";
+
+}else{
+
+type="📉 低估型";
+
+}
+
+document.getElementById("summary").innerHTML=`
+
+<div class="result-card">
+
+<h2>你的結果</h2>
+
+<p>
+預測會答對：<b>${estimatedCorrect}</b> 題
+</p>
+
+<p>
+實際答對：<b>${correct}</b> 題
+</p>
+
+<p>
+後設認知類型：
+<b>${type}</b>
+</p>
+
+<p>
+高估自己的題目：
+${overestimate.length?overestimate.join("、"):"無"}
+</p>
+
+<p>
+低估自己的題目：
+${underestimate.length?underestimate.join("、"):"無"}
+</p>
+
+</div>
+
+`;
+
+document.getElementById("detail").innerHTML=`
+
+<h2>詳細分析</h2>
+
+<table>
+
+<tr>
+<th>題目</th>
+<th>預測</th>
+<th>實際結果</th>
+</tr>
+
+${detailHTML}
+
+</table>
+
+`;
+
+}
+
+</script>
+
+</body>
+</html>
